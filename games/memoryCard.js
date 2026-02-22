@@ -340,6 +340,10 @@ function renderCards() {
             cursor: ${card.matched || card.flipped || !canClick ? 'default' : 'pointer'};
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             transform: perspective(500px) rotateY(${card.flipped || card.matched ? '0deg' : '180deg'});
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
         `;
         
         if (card.matched) {
@@ -376,17 +380,26 @@ function renderCards() {
         }
         
         if (!card.matched && !card.flipped && canClick && !gameOver) {
-            cardEl.onclick = () => flipCard(index);
-            cardEl.onmouseover = () => {
-                if (!gameOver) {
-                    cardEl.style.transform = 'perspective(500px) rotateY(0deg) scale(1.08)';
-                    cardEl.style.zIndex = '10';
-                }
+            // Use pointer events for better mobile support
+            cardEl.onpointerdown = (e) => {
+                e.preventDefault();
+                flipCard(index);
             };
-            cardEl.onmouseout = () => {
-                cardEl.style.transform = 'perspective(500px) rotateY(180deg) scale(1)';
-                cardEl.style.zIndex = '1';
-            };
+            
+            // Only add hover effects on non-touch devices
+            const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            if (!isTouchDevice) {
+                cardEl.onmouseover = () => {
+                    if (!gameOver) {
+                        cardEl.style.transform = 'perspective(500px) rotateY(0deg) scale(1.08)';
+                        cardEl.style.zIndex = '10';
+                    }
+                };
+                cardEl.onmouseout = () => {
+                    cardEl.style.transform = 'perspective(500px) rotateY(180deg) scale(1)';
+                    cardEl.style.zIndex = '1';
+                };
+            }
         }
         
         gameBoard.appendChild(cardEl);
@@ -503,3 +516,4 @@ window.goToMenu = function() {
         originalGoToMenu();
     }
 };
+
